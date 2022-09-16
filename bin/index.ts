@@ -26,6 +26,7 @@ void yargs
         })
         .option("projects-ids", {
           type: "array",
+          default: [],
           describe: "Figma projects ids."
         })
         .option("team-id", {
@@ -74,7 +75,7 @@ void yargs
 
       await new Bot({
         authData: { email: authEmail, password: authPassword },
-        projectsIds: projectsIds?.map(String),
+        projectsIds: projectsIds.map(String),
         teamId,
         downloadTimeout: downloadTimeout * 60 * 1000,
         interactionDelay: interactionDelay * 1000,

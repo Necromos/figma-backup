@@ -2,6 +2,7 @@ import clui from "clui";
 import { Page } from "puppeteer";
 import { log, wait } from ".";
 import chalk from "chalk";
+import fs from 'fs/promises';
 
 const { Spinner } = clui;
 
@@ -9,6 +10,7 @@ interface Options {
   interactionDelay: number;
   typingDelay: number;
   downloadTimeout: number;
+  path: string;
 }
 
 const saveLocalCopy = async (
@@ -16,7 +18,11 @@ const saveLocalCopy = async (
   file: { name: string; id: string },
   options: Options
 ) => {
-  const { interactionDelay, typingDelay, downloadTimeout } = options;
+  const { interactionDelay, typingDelay, downloadTimeout, path } = options;
+
+  await fs.mkdir(path, { recursive: true });
+  const expectedFilesCount = (await fs.readdir(path)).length + 1;
+  let counter = expectedFilesCount - 1;
 
   log(
     chalk.red("\t.") + chalk.bold(` Opening up the figma command pallete...`)
@@ -40,10 +46,12 @@ const saveLocalCopy = async (
     spinner.start();
 
     await wait(interactionDelay);
-    await page.waitForFunction(
-      () => !document.querySelector('[class*="visual_bell--shown"]'),
-      { timeout: downloadTimeout }
-    );
+
+    const beginning = Date.now();
+    while (counter !== expectedFilesCount) {
+      counter = (await fs.readdir(path)).length;
+      if (Date.now() - beginning > downloadTimeout) throw Error('Timeout');
+    }
 
     spinner.stop();
     log(`\t. File (${file.name}) successfully downloaded.`);

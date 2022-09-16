@@ -29,7 +29,7 @@ export interface IAuthData {
 
 export interface IBotOptions {
   authData: IAuthData;
-  projectsIds?: string[];
+  projectsIds: string[];
   teamId?: string;
   figmaAccessToken: string;
   debug?: boolean;
@@ -72,6 +72,7 @@ export default class Bot {
     const {
       authData,
       projectsIds,
+      teamId,
       figmaAccessToken,
       debug = false,
       downloadTimeout = 30 * 1000,
@@ -86,6 +87,7 @@ export default class Bot {
     this._typingDelay = typingDelay;
 
     this._projectsIds = projectsIds;
+    this._teamId = teamId;
     this._figmaAccessToken = figmaAccessToken;
 
     this._debug = debug;
@@ -194,15 +196,19 @@ export default class Bot {
 
     log(chalk.red("\t.") + chalk.bold(` Setting the download behaviour...`));
     await wait(this._interactionDelay);
+
     /* eslint-disable */
+    // @ts-ignore
+    const downloadPath = path.join(
+      BACKUP_DIR,
+      SESSION_DATA.date!.toISOString(),
+      projectName
+    );
+
     // @ts-ignore
     await page._client.send("Page.setDownloadBehavior", {
       behavior: "allow",
-      downloadPath: path.join(
-        BACKUP_DIR,
-        SESSION_DATA.date!.toISOString(),
-        projectName
-      )
+      downloadPath
     });
     /* eslint-enable */
 
@@ -213,7 +219,8 @@ export default class Bot {
     await saveLocalCopy(page, file, {
       interactionDelay: this._interactionDelay,
       typingDelay: this._typingDelay,
-      downloadTimeout: this._downloadTimeout
+      downloadTimeout: this._downloadTimeout,
+      path: downloadPath
     });
   }
 
@@ -248,9 +255,9 @@ export default class Bot {
     try {
       await this._authenticate(page);
 
-      if (this._projectsIds?.length === 0 && this._teamId)
+      if (this._projectsIds.length === 0 && this._teamId)
         this._projectsIds = (await fetchTeamProjects(this._teamId, this._figmaAccessToken)).map((project) => project.id);
-      for (const projectId of this._projectsIds!)
+      for (const projectId of this._projectsIds)
         await this._backupProject(projectId);
     } catch (e) {
       await this.stop();
