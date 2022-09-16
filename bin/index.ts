@@ -28,6 +28,10 @@ void yargs
           type: "array",
           describe: "Figma projects ids."
         })
+        .option("team-id", {
+          type: "string",
+          describe: "Figma team id."
+        })
         .option("debug", {
           type: "boolean",
           default: false,
@@ -54,8 +58,7 @@ void yargs
         })
         .demandOption("e", "Argument `-e | --figma-email` is required.")
         .demandOption("p", "Argument `-p | --figma-password` is required.")
-        .demandOption("t", "Argument `-t | --figma-token` is required.")
-        .demandOption("projects-ids", "Argument `--projects-ids` is required."),
+        .demandOption("t", "Argument `-t | --figma-token` is required."),
     async argv => {
       const {
         debug,
@@ -65,17 +68,19 @@ void yargs
         e: authEmail,
         p: authPassword,
         t: authToken,
-        "projects-ids": projectsIds
+        "projects-ids": projectsIds,
+        "team-id": teamId
       } = argv;
 
       await new Bot({
         authData: { email: authEmail, password: authPassword },
-        projectsIds: projectsIds.map(String),
+        projectsIds: projectsIds?.map(String),
+        teamId,
         downloadTimeout: downloadTimeout * 60 * 1000,
         interactionDelay: interactionDelay * 1000,
         figmaAccessToken: authToken,
         debug,
-        typingDelay
+        typingDelay,
       }).start();
     }
   )
@@ -85,7 +90,8 @@ void yargs
       '--figma-email "<YOUR_EMAIL>"',
       '--figma-password "<YOUR_PASSWORD>"',
       '--figma-token "<YOUR_TOKEN>"',
-      '--projects-ids "ID1" "ID2" ...'
+      '--projects-ids "ID1" "ID2" ...',
+      '--team-id "<TEAM_ID>"'
     ].join(" ")
   )
   .help()

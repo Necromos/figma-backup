@@ -8,6 +8,7 @@ import { AuthorizationError, BackupError } from "./errors";
 import FileSystemCookiesProvider from "./FileSystemCookiesProvider";
 import {
   fetchProject,
+  fetchTeamProjects,
   goToFilePage,
   log,
   parseLoginFormError,
@@ -28,7 +29,8 @@ export interface IAuthData {
 
 export interface IBotOptions {
   authData: IAuthData;
-  projectsIds: string[];
+  projectsIds?: string[];
+  teamId?: string;
   figmaAccessToken: string;
   debug?: boolean;
   interactionDelay?: number;
@@ -57,6 +59,7 @@ export default class Bot {
 
   private _authData: IBotOptions["authData"];
   private _projectsIds: IBotOptions["projectsIds"];
+  private _teamId: IBotOptions["teamId"];
   private _interactionDelay: NonNullable<IBotOptions["interactionDelay"]>;
   private _downloadTimeout: NonNullable<IBotOptions["downloadTimeout"]>;
   private _typingDelay: NonNullable<IBotOptions["typingDelay"]>;
@@ -234,6 +237,10 @@ export default class Bot {
 
   private async _backupProjects(): Promise<void> {
     if (!this._browser) return;
+    if (!this._projectsIds && !this._teamId) {
+      await this.stop();
+      throw new BackupError('Nothing to backup');
+    }
 
     const page = (await this._browser.pages())[0];
     page.setDefaultNavigationTimeout(60 * 1000);
@@ -241,7 +248,9 @@ export default class Bot {
     try {
       await this._authenticate(page);
 
-      for (const projectId of this._projectsIds)
+      if (this._projectsIds?.length === 0 && this._teamId)
+        this._projectsIds = (await fetchTeamProjects(this._teamId, this._figmaAccessToken)).map((project) => project.id);
+      for (const projectId of this._projectsIds!)
         await this._backupProject(projectId);
     } catch (e) {
       await this.stop();
