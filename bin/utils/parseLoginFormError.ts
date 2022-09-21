@@ -11,7 +11,7 @@ const parseLoginFormError = async (page: Page): Promise<null | string> => {
   });
 
   return await page.evaluate(
-    (emailInput: HTMLElement, passwordInput: HTMLElement) => {
+    (emailInput, passwordInput) => {
       if (emailInput.className.includes("invalidInput")) return "Invalid email";
       if (passwordInput.className.includes("invalidInput"))
         return "Invalid password";

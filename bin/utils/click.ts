@@ -5,7 +5,7 @@ const click = async (
   page: Page,
   elementHandle: ElementHandle
 ): Promise<void> => {
-  const clientRect = await page.evaluate((element: HTMLElement) => {
+  const clientRect = await page.evaluate((element) => {
     const { x, y, width, height } = element.getBoundingClientRect();
     return { x, y, width, height };
   }, elementHandle);

@@ -24,7 +24,7 @@ const findElementHandle = async (
 
     for (const handle of handles) {
       const currentElementInnerHTML = await page.evaluate(
-        (element: HTMLElement) => element.innerHTML,
+        (element) => element.innerHTML,
         handle
       );
 
